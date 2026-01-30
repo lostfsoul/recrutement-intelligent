@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # =====================================================
+  # PostgreSQL Database with PgVector Extension
+  # =====================================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: recrutement-postgres
+    environment:
+      POSTGRES_DB: recrutement
+      POSTGRES_USER: recrutement
+      POSTGRES_PASSWORD: recrutement123
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recrutement"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - recrutement-network
+    restart: unless-stopped
+
+  # =====================================================
+  # Spring Boot Backend Application
+  # =====================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: recrutement-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/recrutement
+      SPRING_DATASOURCE_USERNAME: recrutement
+      SPRING_DATASOURCE_PASSWORD: recrutement123
+
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: prod
+
+      # OpenAI API Key
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+      # JWT Secret
+      JWT_SECRET: ${JWT_SECRET}
+
+      # CORS Configuration
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+
+      # File Upload
+      FILE_UPLOAD_DIR: /app/uploads/cv
+    volumes:
+      - cv_uploads:/app/uploads/cv
+      - backend_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - recrutement-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# =====================================================
+# Volumes
+# =====================================================
+volumes:
+  postgres_data:
+    driver: local
+    name: recrutement_postgres_data
+
+  cv_uploads:
+    driver: local
+    name: recrutement_cv_uploads
+
+  backend_logs:
+    driver: local
+    name: recrutement_backend_logs
+
+# =====================================================
+# Networks
+# =====================================================
+networks:
+  recrutement-network:
+    driver: bridge
+    name: recrutement_network
