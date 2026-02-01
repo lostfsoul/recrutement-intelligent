@@ -6,6 +6,7 @@ import ma.recrutement.dto.OffreCreateDTO;
 import ma.recrutement.dto.OffreEmploiDTO;
 import ma.recrutement.dto.OffreUpdateDTO;
 import ma.recrutement.dto.PaginationResponseDTO;
+import ma.recrutement.entity.Entreprise;
 import ma.recrutement.entity.OffreEmploi;
 import ma.recrutement.entity.Recruteur;
 import ma.recrutement.entity.Utilisateur;
@@ -43,6 +44,7 @@ public class OffreEmploiService {
     private final EntrepriseRepository entrepriseRepository;
     private final RecruteurRepository recruteurRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final ma.recrutement.service.ai.MatchingEngineService matchingEngineService;
 
     /**
      * Crée une nouvelle offre d'emploi.
@@ -54,11 +56,23 @@ public class OffreEmploiService {
     public OffreEmploiDTO createOffre(OffreCreateDTO dto) {
         Recruteur recruteur = getAuthenticatedRecruteur();
 
-        // Vérifier que l'entreprise appartient au recruteur
-        var entreprise = recruteur.getEntreprises().stream()
-            .filter(e -> e.getId().equals(dto.getEntrepriseId()))
-            .findFirst()
-            .orElseThrow(() -> new ResourceNotFoundException("Entreprise", dto.getEntrepriseId()));
+        // Sélectionner l'entreprise : auto-select si une seule, sinon utiliser l'ID fourni
+        Entreprise entreprise;
+        if (dto.getEntrepriseId() != null) {
+            // L'utilisateur a spécifié une entreprise
+            entreprise = recruteur.getEntreprises().stream()
+                .filter(e -> e.getId().equals(dto.getEntrepriseId()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Entreprise", dto.getEntrepriseId()));
+        } else if (recruteur.getEntreprises().size() == 1) {
+            // Auto-sélection si le recruteur n'a qu'une seule entreprise
+            entreprise = recruteur.getEntreprises().get(0);
+            log.info("Auto-sélection de l'entreprise: {}", entreprise.getNom());
+        } else if (recruteur.getEntreprises().isEmpty()) {
+            throw new BusinessException("Vous devez d'abord créer une entreprise avant de publier une offre");
+        } else {
+            throw new BusinessException("Vous avez plusieurs entreprises. Veuillez spécifier l'ID de l'entreprise");
+        }
 
         // Générer une référence unique
         String reference = generateReference();
@@ -215,6 +229,17 @@ public class OffreEmploiService {
         offre.setStatut(OffreEmploi.StatutOffre.PUBLIEE);
         offre.setDatePublication(LocalDate.now());
         offre = offreEmploiRepository.save(offre);
+
+        // Auto-index the offer for AI matching (async to not block the response)
+        final Long finalOffreId = offre.getId();
+        new Thread(() -> {
+            try {
+                matchingEngineService.indexOffre(finalOffreId);
+                log.info("Offre auto-indexed: ID={}", finalOffreId);
+            } catch (Exception e) {
+                log.error("Failed to auto-index offre: ID={}", finalOffreId, e);
+            }
+        }).start();
 
         log.info("Offre publiée: ID={}", offreId);
         return mapToDTO(offre);

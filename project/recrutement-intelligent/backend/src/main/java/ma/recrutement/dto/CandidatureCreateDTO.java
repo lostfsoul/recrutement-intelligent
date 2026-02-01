@@ -1,6 +1,5 @@
 package ma.recrutement.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +17,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CandidatureCreateDTO {
 
-    @NotNull(message = "L'ID de l'offre est obligatoire")
+    // offreId is set from path variable, no validation needed here
     private Long offreId;
 
     private String lettreMotivation;

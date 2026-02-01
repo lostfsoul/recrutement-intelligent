@@ -6,9 +6,12 @@ import lombok.RequiredArgsConstructor;
 import ma.recrutement.dto.MatchingResultDTO;
 import ma.recrutement.service.ai.MatchingEngineService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controller pour le matching intelligent CV/Offres.
@@ -26,31 +29,16 @@ public class MatchingController {
     private final MatchingEngineService matchingEngineService;
 
     /**
-     * Trouve les offres correspondantes pour un candidat.
-     *
-     * @param candidatId l'ID du candidat
-     * @param limit le nombre maximum de résultats (défaut 10)
-     * @return la liste des offres correspondantes
-     */
-    @Operation(summary = "Offres pour un candidat", description = "Trouve les offres correspondantes pour un candidat")
-    @GetMapping("/candidats/{candidatId}/offres")
-    public ResponseEntity<List<MatchingResultDTO>> findMatchingOffres(
-            @PathVariable Long candidatId,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
-        List<MatchingResultDTO> results = matchingEngineService.findMatchingOffres(candidatId, limit);
-        return ResponseEntity.ok(results);
-    }
-
-    /**
      * Trouve les candidats correspondants pour une offre.
+     * Accessible uniquement par les recruteurs et admins (pas les candidats).
      *
      * @param offreId l'ID de l'offre
      * @param limit le nombre maximum de résultats (défaut 10)
      * @return la liste des candidats correspondants
      */
-    @Operation(summary = "Candidats pour une offre", description = "Trouve les candidats correspondants pour une offre")
+    @Operation(summary = "Candidats pour une offre", description = "Trouve les candidats correspondants pour une offre (Recruteurs/Admins uniquement)")
     @GetMapping("/offres/{offreId}/candidats")
+    @PreAuthorize("hasAnyRole('RECRUTEUR', 'ADMINISTRATEUR')")
     public ResponseEntity<List<MatchingResultDTO>> findMatchingCandidates(
             @PathVariable Long offreId,
             @RequestParam(defaultValue = "10") int limit
@@ -60,26 +48,32 @@ public class MatchingController {
     }
 
     /**
-     * Indexe un CV dans le vector store.
+     * Indexe le CV du candidat connecté pour le matching AI.
      *
-     * @param candidatId l'ID du candidat
+     * @return confirmation de l'indexation
      */
-    @Operation(summary = "Indexer un CV", description = "Indexe un CV dans le vector store pour le matching")
-    @PostMapping("/cv/{candidatId}/indexer")
-    public ResponseEntity<Void> indexCv(@PathVariable Long candidatId) {
-        matchingEngineService.indexCv(candidatId);
-        return ResponseEntity.noContent().build();
+    @Operation(summary = "Indexer mon CV", description = "Indexe le CV du candidat dans le vector store pour le matching AI")
+    @PostMapping("/cv/indexer")
+    public ResponseEntity<Map<String, String>> indexMyCv() {
+        matchingEngineService.indexMyCv();
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "CV indexé avec succès pour le matching AI");
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Indexe une offre dans le vector store.
+     * Indexe une offre d'emploi pour le matching AI.
      *
      * @param offreId l'ID de l'offre
+     * @return confirmation de l'indexation
      */
-    @Operation(summary = "Indexer une offre", description = "Indexe une offre dans le vector store pour le matching")
+    @Operation(summary = "Indexer une offre", description = "Indexe une offre dans le vector store pour le matching AI")
     @PostMapping("/offres/{offreId}/indexer")
-    public ResponseEntity<Void> indexOffre(@PathVariable Long offreId) {
+    @PreAuthorize("hasAnyRole('RECRUTEUR', 'ADMINISTRATEUR')")
+    public ResponseEntity<Map<String, String>> indexOffre(@PathVariable Long offreId) {
         matchingEngineService.indexOffre(offreId);
-        return ResponseEntity.noContent().build();
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Offre indexée avec succès pour le matching AI");
+        return ResponseEntity.ok(response);
     }
 }

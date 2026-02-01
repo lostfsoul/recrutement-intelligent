@@ -88,42 +88,4 @@ public class CandidatureController {
         CandidatureDTO updated = candidatureService.updateStatut(candidatureId, statut);
         return ResponseEntity.ok(updated);
     }
-
-    /**
-     * Marque une candidature comme vue (recruteur).
-     *
-     * @param candidatureId l'ID de la candidature
-     * @return la candidature mise à jour
-     */
-    @Operation(summary = "Marquer comme vue", description = "Marque une candidature comme vue par le recruteur")
-    @PostMapping("/candidatures/{candidatureId}/vue")
-    public ResponseEntity<CandidatureDTO> markAsViewed(@PathVariable Long candidatureId) {
-        CandidatureDTO updated = candidatureService.markAsViewed(candidatureId);
-        return ResponseEntity.ok(updated);
-    }
-
-    /**
-     * Annule une candidature (candidat).
-     *
-     * @param candidatureId l'ID de la candidature
-     */
-    @Operation(summary = "Annuler ma candidature", description = "Annule une candidature")
-    @DeleteMapping("/candidatures/{candidatureId}")
-    public ResponseEntity<Void> cancelCandidature(@PathVariable Long candidatureId) {
-        candidatureService.cancelCandidature(candidatureId);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Compte les candidatures non vues pour une offre.
-     *
-     * @param offreId l'ID de l'offre
-     * @return le nombre de candidatures non vues
-     */
-    @Operation(summary = "Compter les candidatures non vues", description = "Compte le nombre de candidatures non vues pour une offre")
-    @GetMapping("/offres/{offreId}/candidatures/non-vues/count")
-    public ResponseEntity<Long> countUnviewedCandidatures(@PathVariable Long offreId) {
-        long count = candidatureService.countUnviewedCandidatures(offreId);
-        return ResponseEntity.ok(count);
-    }
 }

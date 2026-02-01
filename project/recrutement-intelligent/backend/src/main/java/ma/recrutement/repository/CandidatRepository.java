@@ -28,7 +28,8 @@ public interface CandidatRepository extends JpaRepository<Candidat, Long>, JpaSp
      * @param email l'email du candidat
      * @return le candidat trouvé ou Optional vide
      */
-    Optional<Candidat> findByEmail(String email);
+    @Query("SELECT c FROM Candidat c WHERE c.email = :email")
+    Optional<Candidat> findByEmail(@Param("email") String email);
 
     /**
      * Vérifie si un candidat existe avec cet email.

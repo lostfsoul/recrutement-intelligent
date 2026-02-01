@@ -1,0 +1,556 @@
+@startuml
+' Style configurations
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<entity>> #E3F2FD
+    BackgroundColor<<service>> #FFF3E0
+    BackgroundColor<<controller>> #E8F5E9
+    BackgroundColor<<repository>> #F3E5F5
+    BackgroundColor<<dto>> #FFF9C4
+    BackgroundColor<<config>> #E0F2F1
+    BackgroundColor<<enum>> #F1F8E9
+    ArrowColor #2196F3
+    BorderColor #1976D2
+    FontColor #333333
+}
+
+package config {
+    class SpringAIConfig {
+        -openaiApiKey: String
+        -chatModel: String
+        +chatModel() : ChatModel
+        +chatClient(ChatModel) : ChatClient
+        +embeddingModel() : EmbeddingModel
+        +vectorStore(EmbeddingModel) : VectorStore
+    }
+
+    class SecurityConfig {
+        +userDetailsService() : CustomUserDetailsService
+        +jwtAuthenticationProvider() : AuthenticationProvider
+        +passwordEncoder() : PasswordEncoder
+        +filterChain(HttpSecurity) : SecurityFilterChain
+    }
+
+    class JpaConfig {
+        +configureJpaProperties(JpaProperties) : void
+    }
+
+    class CorsConfig {
+        +corsConfigurationSource() : CorsConfigurationSource
+    }
+
+    class PgVectorInitializer {
+        +afterPropertiesSet() throws Exception
+        +createPgVectorExtension()
+        +createEmbeddingsTable()
+        +createVectorIndex()
+    }
+}
+
+package entity {
+    abstract class Utilisateur {
+        -id: Long
+        -email: String
+        -password: String
+        -nom: String
+        -prenom: String
+        -telephone: String
+        -role: Role
+        -emailVerifie: Boolean
+        -actif: Boolean
+        -dateCreation: LocalDateTime
+        -dateModification: LocalDateTime
+    }
+
+    class Candidat extends Utilisateur {
+        -cvPath: String
+        -cvText: String
+        -cvVectorId: String
+        -titrePosteRecherche: String
+        -disponibiliteImmediate: Boolean
+        -dateDisponibilite: LocalDate
+        -pretentionSalarialeMin: Integer
+        -pretentionSalarialeMax: Integer
+        -mobilite: String
+        -linkedinUrl: String
+        -githubUrl: String
+        -portefolioUrl: String
+        -presentation: String
+        -statut: StatutCandidat
+        -- competences: List<Competence>
+        -- experiences: List<Experience>
+        -- candidatures: List<Candidature>
+    }
+
+    class Recruteur extends Utilisateur {
+        -- entreprises: List<Entreprise>
+        -- entreprises: List<OffreEmploi>
+    }
+
+    class Administrateur extends Utilisateur {
+    }
+
+    enum Role {
+        CANDIDAT
+        RECRUTEUR
+        ADMINISTRATEUR
+    }
+
+    enum StatutCandidat {
+        ACTIF
+        INACTIF
+        SUSPENDU
+    }
+
+    class Competence {
+        -id: Long
+        -nom: String
+        -categorie: CategorieCompetence
+        -niveau: NiveauCompetence
+        -anneesExperience: Integer
+        -certifiee: Boolean
+        -- candidat: Candidat
+    }
+
+    enum CategorieCompetence {
+        LANGAGE
+        FRAMEWORK
+        DATABASE
+        OUTIL
+        CLOUD
+        SOFT_SKILL
+        LANGUE
+    }
+
+    enum NiveauCompetence {
+        DEBUTANT
+        INTERMEDIAIRE
+        AVANCE
+        EXPERT
+    }
+
+    class Experience {
+        -id: Long
+        -titre: String
+        -entreprise: String
+        -typeEntreprise: TypeEntreprise
+        -dateDebut: LocalDate
+        -dateFin: LocalDate
+        -description: String
+        -poste: String
+        -ville: String
+        -pays: String
+        -- candidat: Candidat
+    }
+
+    enum TypeEntreprise {
+        ESN
+        SSII
+        STARTUP
+        GRPE_GROUPE
+        ADMINISTRATION
+        AUTRE
+    }
+
+    class Entreprise {
+        -id: Long
+        -nom: String
+        -description: String
+        -secteur: String
+        -siteWeb: String
+        -ville: String
+        -pays: String
+        -tailleEntreprise: String
+        -statut: StatutEntreprise
+        -dateCreation: LocalDateTime
+        -- recruteur: Recruteur
+        -- offres: List<OffreEmploi>
+    }
+
+    enum StatutEntreprise {
+        EN_ATTENTE
+        VALIDEE
+        REFUSEE
+    }
+
+    class OffreEmploi {
+        -id: Long
+        -reference: String
+        -titre: String
+        -description: String
+        -competencesRequises: String
+        -profilRecherche: String
+        -salaireMin: Integer
+        -salaireMax: Integer
+        -devise: String
+        -frequencePaiement: String
+        -localisation: String
+        -ville: String
+        -pays: String
+        -teletravail: Boolean
+        -typeContrat: TypeContrat
+        -statut: StatutOffre
+        -experienceMinAnnees: Integer
+        -niveauEtudesMin: NiveauEtudes
+        -languesRequises: String
+        -datePublication: LocalDate
+        -dateLimiteCandidature: LocalDate
+        -nombrePostes: Integer
+        -actif: Boolean
+        -vectorId: String
+        -- entreprise: Entreprise
+        -- candidatures: List<Candidature>
+    }
+
+    enum TypeContrat {
+        CDI
+        CDD
+        FREELANCE
+        STAGE
+        ALTERNANCE
+    }
+
+    enum StatutOffre {
+        BROILLON
+        PUBLIEE
+        COMBLÉE
+        ARCHIVÉE
+    }
+
+    class Candidature {
+        -id: Long
+        -statut: StatutCandidature
+        -dateCandidature: LocalDateTime
+        -lettreMotivation: String
+        -- candidat: Candidat
+        -- offre: OffreEmploi
+    }
+
+    enum StatutCandidature {
+        EN_ATTENTE
+        EN_COURS
+        ENTRETIEN_PLANIFIE
+        ACCEPTEE
+        REFUSÉE
+        ANNULÉE
+    }
+}
+
+package repository {
+    interface CandidatRepository extends JpaRepository<Candidat, Long> {
+        Optional<Candidat> findByEmail(String email);
+        List<Candidat> findByActifTrue();
+    }
+
+    interface RecruteurRepository extends JpaRepository<Recruteur, Long> {
+        Optional<Recruteur> findByEmail(String email);
+    }
+
+    interface AdministrateurRepository extends JpaRepository<Administrateur, Long> {
+    }
+
+    interface EntrepriseRepository extends JpaRepository<Entreprise, Long> {
+        List<Entreprise> findByRecruteurId(Long recruteurId);
+    }
+
+    interface OffreEmploiRepository extends JpaRepository<OffreEmploi, Long> {
+        List<OffreEmploi> findByEntrepriseIdAndStatutAndActifTrue(Long entrepriseId, StatutOffre statut);
+        @Query("SELECT o FROM OffreEmploi o JOIN o.entreprise e WHERE e.recruteur.id = :recruteurId AND o.statut = 'PUBLIEE' AND o.actif = true")
+        List<OffreEmploi> findPublishedByRecruteurId(@Param("recruteurId") Long recruteurId);
+        @Query("SELECT o FROM OffreEmploi o WHERE o.id = :id AND o.entreprise.id = :entrepriseId")
+        OffreEmploi findByIdWithEntreprise(@Param("id") Long id, @Param("entrepriseId") Long entrepriseId);
+    }
+
+    interface CandidatureRepository extends JpaRepository<Candidature, Long> {
+        List<Candidature> findByCandidatId(Long candidatId);
+        List<Candidature> findByOffreId(Long offreId);
+    }
+
+    interface CompetenceRepository extends JpaRepository<Competence, Long> {
+    }
+
+    interface ExperienceRepository extends JpaRepository<Experience, Long> {
+    }
+}
+
+package service {
+    class UtilisateurService {
+        +register(RegisterRequestDTO, Role) : TokenResponse
+        +login(LoginRequestDTO) : TokenResponse
+        +refreshToken(String) : TokenResponse
+        -userRepository: UserRepository
+        -jwtUtil: JwtUtil
+    }
+
+    class CandidatService {
+        +getMyProfile() : CandidatProfileDTO
+        +updateMyProfile(CandidatDTO) : CandidatDTO
+        +setCvText(String) : void
+        +uploadCv(MultipartFile) : CvUploadDTO
+        +getMyCv() : String
+        +deleteMyCv() : void
+        +addCompetence(CompetenceDTO) : CompetenceDTO
+        +deleteCompetence(Long) : void
+        +addExperience(ExperienceDTO) : ExperienceDTO
+        +deleteExperience(Long) : void
+        +getMyCandidatures() : List<CandidatureDTO>
+        +getCurrentEmail() : String
+        -candidatRepository: CandidatRepository
+        -competenceRepository: CompetenceRepository
+        -experienceRepository: ExperienceRepository
+        -candidatureRepository: CandidatureRepository
+        -fileStorageUtil: FileStorageUtil
+        -skillExtractionService: SkillExtractionService
+    }
+
+    class RecruteurService {
+        +getMyProfile() : RecruteurProfileDTO
+        +updateMyProfile(RecruteurDTO) : RecruteurDTO
+        +createEntreprise(EntrepriseCreateDTO) : EntrepriseDTO
+        +getMyEntreprises() : List<EntrepriseDTO>
+        -recruteurRepository: RecruteurRepository
+        -entrepriseRepository: EntrepriseRepository
+    }
+
+    class OffreEmploiService {
+        +createOffre(OffreCreateDTO) : OffreEmploiDTO
+        +updateOffre(Long, OffreUpdateDTO) : OffreEmploiDTO
+        +getOffreById(Long) : OffreEmploiDTO
+        +searchOffres(int, int, String) : Page<OffreEmploiDTO>
+        +publishOffre(Long) : void
+        +getAllOffres() : List<OffreEmploiDTO>
+        -offreEmploiRepository: OffreEmploiRepository
+        -entrepriseRepository: EntrepriseRepository
+    }
+
+    class CandidatureService {
+        +createCandidature(Long, CandidatureCreateDTO) : CandidatureDTO
+        +getCandidatureById(Long) : CandidatureDTO
+        +getCandidaturesByOffre(Long) : List<CandidatureDTO>
+        +getCandidaturesByCandidat(Long) : List<CandidatureDTO>
+        +updateStatut(Long, StatutCandidature) : CandidatureDTO
+        +cancelCandidature(Long) : void
+        +markAsViewed(Long) : void
+        -candidatureRepository: CandidatureRepository
+    }
+
+    class SkillExtractionService {
+        +extractSkills(String) : SkillAnalysisDTO
+        -embeddingModel: EmbeddingModel
+    }
+
+    class MatchingEngineService {
+        +indexCv(Long) : void
+        +indexMyCv() : void
+        +indexOffre(Long) : void
+        +findMatchingOffres(Long, int) : List<MatchingResultDTO>
+        +findMatchingCandidates(Long, int) : List<MatchingResultDTO>
+        +calculateMatching(OffreEmploi, Candidat, double) : MatchingResultDTO
+        +buildOffreText(OffreEmploi) : String
+        -vectorStore: VectorStore
+        -chatClient: ChatClient
+        -candidatRepository: CandidatRepository
+        -offreEmploiRepository: OffreEmploiRepository
+    }
+
+    class RecommendationService {
+        +generateRecommendations(Long candidatId) : List<OffreEmploiDTO>
+        +generateRecommendationsForOffre(Long offreId) : List<CandidatDTO>
+    }
+}
+
+package controller {
+    class AuthController {
+        +login(LoginRequestDTO) : ResponseEntity<TokenResponse>
+        +register(RegisterRequestDTO) : ResponseEntity<TokenResponse>
+        +refreshToken(String) : ResponseEntity<TokenResponse>
+        -utilisateurService: UtilisateurService
+    }
+
+    class CandidatController {
+        +getMyProfile() : ResponseEntity<CandidatProfileDTO>
+        +updateMyProfile(CandidatDTO) : ResponseEntity<CandidatDTO>
+        +setCvText(String) : ResponseEntity<String>
+        +uploadCv(MultipartFile) : ResponseEntity<CvUploadDTO>
+        +getMyCv() : ResponseEntity<String>
+        +deleteMyCv() : ResponseEntity<Void>
+        +addCompetence(CompetenceDTO) : ResponseEntity<CompetenceDTO>
+        +deleteCompetence(Long) : ResponseEntity<Void>
+        +addExperience(ExperienceDTO) : ResponseEntity<ExperienceDTO>
+        +deleteExperience(Long) : ResponseEntity<Void>
+        +getMyCandidatures() : ResponseEntity<List<CandidatureDTO>>
+        -candidatService: CandidatService
+    }
+
+    class RecruteurController {
+        +getMyProfile() : ResponseEntity<RecruteurProfileDTO>
+        +updateMyProfile(RecruteurDTO) : ResponseEntity<RecruteurDTO>
+        +createEntreprise(EntrepriseCreateDTO) : ResponseEntity<EntrepriseDTO>
+        +getMyEntreprises() : ResponseEntity<List<EntrepriseDTO>>
+        +getOffres() : ResponseEntity<List<OffreEmploiDTO>>
+        -recruteurService: RecruteurService
+    }
+
+    class OffreController {
+        +createOffre(OffreCreateDTO) : ResponseEntity<OffreEmploiDTO>
+        +updateOffre(Long, OffreUpdateDTO) : ResponseEntity<OffreEmploiDTO>
+        +getOffreById(Long) : ResponseEntity<OffreEmploiDTO>
+        +deleteOffre(Long) : ResponseEntity<Void>
+        +searchOffres(int, int, String) : ResponseEntity<Page<OffreEmploiDTO>>
+        +getAllOffres() : ResponseEntity<List<OffreEmploiDTO>>
+        -offreEmploiService: OffreEmploiService
+    }
+
+    class CandidatureController {
+        +createCandidature(Long, CandidatureCreateDTO) : ResponseEntity<CandidatureDTO>
+        +getCandidatureById(Long) : ResponseEntity<CandidatureDTO>
+        +getCandidaturesByOffre(Long) : ResponseEntity<List<CandidatureDTO>>
+        +updateStatut(Long, StatutCandidature) : ResponseEntity<CandidatureDTO>
+        +markAsViewed(Long) : ResponseEntity<Void>
+        +cancelCandidature(Long) : ResponseEntity<Void>
+        +countUnviewedCandidatures(Long) : ResponseEntity<Long>
+        -candidatureService: CandidatureService
+    }
+
+    class MatchingController {
+        +findMatchingOffres(Long candidatId, int limit) : ResponseEntity<List<MatchingResultDTO>>
+        +findMatchingCandidates(Long offreId, int limit) : ResponseEntity<List<MatchingResultDTO>>
+        +indexCv(Long candidatId) : ResponseEntity<Void>
+        +indexMyCv() : ResponseEntity<Void>
+        +indexOffre(Long offreId) : ResponseEntity<Void>
+        -matchingEngineService: MatchingEngineService
+    }
+
+    class AIController {
+        +parseCv(MultipartFile) : ResponseEntity<String>
+        +extractSkills(String) : ResponseEntity<SkillAnalysisDTO>
+        +analyzeCv(MultipartFile) : ResponseEntity<SkillAnalysisDTO>
+        -cvParsingService: CvParsingService
+        -skillExtractionService: SkillExtractionService
+    }
+
+    class AdminController {
+        +getStatistics() : ResponseEntity<Map<String, Object>>
+        +getEntreprisesEnAttente() : ResponseEntity<List<EntrepriseDTO>>
+        +validateEntreprise(Long) : ResponseEntity<Void>
+        +rejectEntreprise(Long) : ResponseEntity<Void>
+        +activateUser(Long) : ResponseEntity<Void>
+        +deactivateUser(Long) : ResponseEntity<Void>
+        +resetPassword(Long, String) : ResponseEntity<Void>
+        +deleteOffre(Long) : ResponseEntity<Void>
+        -adminService: AdminService
+    }
+}
+
+package dto {
+    class TokenResponse {
+        +accessToken: String
+        +refreshToken: String
+        +tokenType: String
+        +expiresIn: int
+        +userInfo: UserInfo
+    }
+
+    class UserInfo {
+        +id: Long
+        +email: String
+        +nom: String
+        +prenom: String
+        +role: Role
+        +emailVerifie: Boolean
+    }
+
+    class CandidatProfileDTO {
+        +candidat: CandidatDTO
+        +competences: List<CompetenceDTO>
+        +experiences: List<ExperienceDTO>
+        +nombreCandidatures: Integer
+        +nombreCompetences: Integer
+        +nombreExperiences: Integer
+    }
+
+    class CandidatDTO {
+        +id: Long
+        +email: String
+        +nom: String
+        +prenom: String
+        +telephone: String
+        +cvText: String
+        +titrePosteRecherche: String
+        +disponibiliteImmediate: Boolean
+        +linkedinUrl: String
+        +githubUrl: String
+        +presentation: String
+        +statut: String
+    }
+
+    class CompetenceDTO {
+        +id: Long
+        +nom: String
+        +categorie: String
+        +niveau: String
+        +anneesExperience: Integer
+        +certifiee: Boolean
+    }
+
+    class ExperienceDTO {
+        +id: Long
+        +titre: String
+        +entreprise: String
+        +typeEntreprise: String
+        +dateDebut: String
+        +dateFin: String
+        -description: String
+        -poste: String
+        -ville: String
+        -pays: String
+    }
+
+    class MatchingResultDTO {
+        +offreId: Long
+        +offreTitre: String
+        +nomEntreprise: String
+        +candidatId: Long
+        +candidatNom: String
+        +candidatPrenom: String
+        +scoreMatching: Integer
+        +scoreCompetences: Integer
+        +scoreExperience: Integer
+        +scoreFormation: Integer
+        +competencesMatch: List<CompetenceDTO>
+        +competencesManquantes: List<String>
+        +recommendation: String
+        +recommande: Boolean
+        +reason: String
+    }
+}
+
+package exception {
+    class GlobalExceptionHandler {
+        +handleAuthenticationException(AuthenticationException) : ResponseEntity<ErrorResponse>
+        +handleResourceNotFoundException(ResourceNotFoundException) : ResponseEntity<ErrorResponse>
+        +handleValidationException(MethodArgumentNotValidException) : ResponseEntity<ErrorResponse>
+        +handleAccessDeniedException(AccessDeniedException) : ResponseEntity<ErrorResponse>
+        +handleException(Exception) : ResponseEntity<ErrorResponse>
+    }
+}
+
+' Relationships
+Candidat "1" -- "N" Competence : has
+Candidat "1" -- "N" Experience : has
+Candidat "1" -- "N" Candidature : has
+
+Entreprise "1" -- "N" OffreEmploi : has
+Recruteur "1" -- "N" Entreprise : owns
+Recruteur "1" -- "N" OffreEmploi : has
+
+OffreEmpoire "1" -- "N" Candidature : has
+
+Candidature "*" -- "1" Candidat : belongs to
+Candidature "*" -- "1" OffreEmploi : applies to
+
+Utilisateur <|-- Candidat
+Utilisateur <|-- Recruteur
+Utilisateur <|-- Administrateur
+
+@enduml

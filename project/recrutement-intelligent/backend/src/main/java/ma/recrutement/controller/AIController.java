@@ -29,32 +29,6 @@ public class AIController {
     private final SkillExtractionService skillExtractionService;
 
     /**
-     * Parse un fichier CV pour en extraire le texte.
-     *
-     * @param file le fichier CV
-     * @return la réponse avec le texte extrait
-     */
-    @Operation(summary = "Parser un CV", description = "Extrait le texte d'un fichier CV (PDF, DOCX)")
-    @PostMapping(value = "/parse-cv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CvParseResponseDTO> parseCv(@RequestParam("file") MultipartFile file) {
-        CvParseResponseDTO response = cvParsingService.parseCv(file);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Extrait les compétences depuis le texte d'un CV.
-     *
-     * @param cvText le texte du CV
-     * @return les compétences extraites
-     */
-    @Operation(summary = "Extraire les compétences", description = "Extrait les compétences depuis le texte d'un CV utilisant l'IA")
-    @PostMapping("/extract-skills")
-    public ResponseEntity<SkillExtractionDTO> extractSkills(@RequestBody String cvText) {
-        SkillExtractionDTO response = skillExtractionService.extractSkills(cvText);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
      * Analyse un fichier CV complet (parsing + extraction de compétences).
      *
      * @param file le fichier CV

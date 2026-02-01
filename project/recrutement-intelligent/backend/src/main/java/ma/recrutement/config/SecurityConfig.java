@@ -50,7 +50,9 @@ public class SecurityConfig {
                     "/api/v1/offres",
                     "/api/v1/offres/**",
                     "/swagger-ui/**",
+                    "/swagger-ui.html",
                     "/v3/api-docs/**",
+                    "/api-docs/**",
                     "/swagger-resources/**",
                     "/webjars/**",
                     "/error"
@@ -65,8 +67,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/ai/**").authenticated()
                 // Endpoints matching (authentifiés)
                 .requestMatchers("/api/v1/matching/**").authenticated()
-                // Endpoints administrateur
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMINISTRATEUR")
                 // Toutes les autres requêtes nécessitent une authentification
                 .anyRequest().authenticated()
             )

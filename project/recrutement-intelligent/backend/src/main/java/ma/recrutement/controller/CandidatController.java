@@ -12,7 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controller pour la gestion des candidats.
@@ -68,75 +70,18 @@ public class CandidatController {
     }
 
     /**
-     * Obtient le CV du candidat.
+     * Définit le texte du CV directement (pour tests).
      *
-     * @return le CV
+     * @param cvText le texte du CV
+     * @return confirmation
      */
-    @Operation(summary = "Mon CV", description = "Récupère le CV du candidat connecté")
-    @GetMapping("/me/cv")
-    public ResponseEntity<String> getMyCv() {
-        String cvPath = candidatService.getMyCv();
-        return ResponseEntity.ok(cvPath);
-    }
-
-    /**
-     * Supprime le CV du candidat.
-     */
-    @Operation(summary = "Supprimer mon CV", description = "Supprime le CV du candidat connecté")
-    @DeleteMapping("/me/cv")
-    public ResponseEntity<Void> deleteMyCv() {
-        candidatService.deleteMyCv();
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Ajoute une compétence au candidat.
-     *
-     * @param competenceDto la compétence à ajouter
-     * @return la compétence créée
-     */
-    @Operation(summary = "Ajouter une compétence", description = "Ajoute une compétence au profil du candidat")
-    @PostMapping("/me/competences")
-    public ResponseEntity<CompetenceDTO> addCompetence(@Valid @RequestBody CompetenceDTO competenceDto) {
-        CompetenceDTO created = candidatService.addCompetence(competenceDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
-
-    /**
-     * Supprime une compétence du candidat.
-     *
-     * @param competenceId l'ID de la compétence
-     */
-    @Operation(summary = "Supprimer une compétence", description = "Supprime une compétence du profil du candidat")
-    @DeleteMapping("/me/competences/{competenceId}")
-    public ResponseEntity<Void> deleteCompetence(@PathVariable Long competenceId) {
-        candidatService.deleteCompetence(competenceId);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Ajoute une expérience au candidat.
-     *
-     * @param experienceDto l'expérience à ajouter
-     * @return l'expérience créée
-     */
-    @Operation(summary = "Ajouter une expérience", description = "Ajoute une expérience professionnelle au profil du candidat")
-    @PostMapping("/me/experiences")
-    public ResponseEntity<ExperienceDTO> addExperience(@Valid @RequestBody ExperienceDTO experienceDto) {
-        ExperienceDTO created = candidatService.addExperience(experienceDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
-
-    /**
-     * Supprime une expérience du candidat.
-     *
-     * @param experienceId l'ID de l'expérience
-     */
-    @Operation(summary = "Supprimer une expérience", description = "Supprime une expérience du profil du candidat")
-    @DeleteMapping("/me/experiences/{experienceId}")
-    public ResponseEntity<Void> deleteExperience(@PathVariable Long experienceId) {
-        candidatService.deleteExperience(experienceId);
-        return ResponseEntity.noContent().build();
+    @Operation(summary = "Définir texte CV (test)", description = "Définit directement le texte du CV pour le matching AI")
+    @PostMapping("/me/cv/text")
+    public ResponseEntity<Map<String, String>> setCvText(@RequestBody String cvText) {
+        candidatService.setCvText(cvText);
+        Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "CV text défini avec succès");
+        return ResponseEntity.ok(response);
     }
 
     /**

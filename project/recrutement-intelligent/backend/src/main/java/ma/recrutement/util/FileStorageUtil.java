@@ -1,5 +1,6 @@
 package ma.recrutement.util;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -57,6 +58,7 @@ public class FileStorageUtil {
     /**
      * Initialise les répertoires de stockage.
      */
+    @PostConstruct
     public void init() {
         try {
             Path cvPath = Paths.get(uploadDir, "cv");

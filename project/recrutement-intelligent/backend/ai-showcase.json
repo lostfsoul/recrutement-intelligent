@@ -1,0 +1,477 @@
+{
+  "info": {
+    "name": "AI Recruitment Platform API",
+    "description": "Smart recruitment platform with AI-powered CV analysis and intelligent matching",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "3.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "candidat_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recruteur_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "offre_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "candidature_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register Candidate",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"sophie.bernard@email.com\",\"password\":\"Password123!\",\"passwordConfirmation\":\"Password123!\",\"nom\":\"Bernard\",\"prenom\":\"Sophie\",\"role\":\"CANDIDAT\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Recruiter",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"thomas.moreau@techcorp.com\",\"password\":\"Password123!\",\"passwordConfirmation\":\"Password123!\",\"nom\":\"Moreau\",\"prenom\":\"Thomas\",\"role\":\"RECRUTEUR\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login as Candidate",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"sophie.bernard@email.com\",\"password\":\"Password123!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login as Recruiter",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"thomas.moreau@techcorp.com\",\"password\":\"Password123!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "\"your_refresh_token_here\""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. AI Features",
+      "item": [
+        {
+          "name": "Analyze CV (Parse + AI)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{candidat_token}}"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{"key": "file", "type": "file", "src": "/path/to/cv.pdf"}]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/analyze-cv",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "analyze-cv"]
+            }
+          },
+          "description": "Upload CV for AI-powered analysis. Extracts text and uses GPT to identify skills, experience, and qualifications."
+        }
+      ]
+    },
+    {
+      "name": "3. Candidate Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{candidat_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/candidats/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "candidats", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{candidat_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"telephone\":\"+33623456789\",\"titrePosteRecherche\":\"Lead Developer Full-Stack\",\"linkedinUrl\":\"https://linkedin.com/in/sophiebernard\",\"githubUrl\":\"https://github.com/sophiebernard\",\"presentation\":\"Développeuse passionnée avec 6 ans d'expérience. Spécialisée dans Spring Boot, React et les architectures cloud. Cherche des opportunités innovantes.\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/candidats/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "candidats", "me"]
+            }
+          }
+        },
+        {
+          "name": "Upload CV File",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{candidat_token}}"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{"key": "file", "type": "file", "src": "/path/to/cv.pdf"}]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/candidats/me/cv",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "candidats", "me", "cv"]
+            }
+          }
+        },
+        {
+          "name": "Get My Applications",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{candidat_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/candidats/me/candidatures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "candidats", "me", "candidatures"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Recruiter Profile & Company",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recruteurs/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recruteurs", "me"]
+            }
+          }
+        },
+        {
+          "name": "Create Company",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{recruteur_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Nexus Digital\",\"description\":\"Agence digitale spécialisée dans les solutions IA et cloud computing pour les entreprises\",\"secteur\":\"Technologie / Informatique\",\"siteWeb\":\"https://nexus-digital.fr\",\"ville\":\"Lyon\",\"pays\":\"France\",\"emailContact\":\"recrutement@nexus-digital.fr\",\"telephoneContact\":\"+33478901234\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recruteurs/me/entreprises",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recruteurs", "me", "entreprises"]
+            }
+          },
+          "description": "Create a company. Required before posting job offers."
+        },
+        {
+          "name": "Get My Companies",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recruteurs/me/entreprises",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recruteurs", "me", "entreprises"]
+            }
+          }
+        },
+        {
+          "name": "Get My Job Offers",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recruteurs/me/offres",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recruteurs", "me", "offres"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Job Offers",
+      "item": [
+        {
+          "name": "Create Job Offer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{recruteur_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titre\":\"Développeur Full-Stack Java/React\",\"description\":\"Nous recherchons un Développeur Full-Stack confirmé pour rejoindre notre équipe de R&D. Vous participerez au développement de plateformes SaaS innovantes utilisant les dernières technologies (Spring Boot 3, React 18, Docker, Kubernetes). Missions : développement backend, API REST, intégration CI/CD, veille technologique.\",\"typeContrat\":\"CDI\",\"salaireMin\":50000,\"salaireMax\":70000,\"ville\":\"Lyon\",\"pays\":\"France\",\"teletravail\":true,\"experienceMinAnnees\":4,\"nombrePostes\":2}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/offres",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "offres"]
+            }
+          },
+          "description": "Create a job offer. entrepriseId auto-selected if recruiter has only one company."
+        },
+        {
+          "name": "Search Job Offers",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{candidat_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/offres?page=0&size=10&titre=Java&localisation=Lyon",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "offres"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "10"},
+                {"key": "titre", "value": "Java"},
+                {"key": "localisation", "value": "Lyon"}
+              ]
+            }
+          },
+          "description": "Search with pagination and optional filters (titre, localisation)"
+        },
+        {
+          "name": "Get Job Offer Details",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{candidat_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/offres/{{offre_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "offres", "{{offre_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Publish Job Offer",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/offres/{{offre_id}}/publier",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "offres", "{{offre_id}}", "publier"]
+            }
+          },
+          "description": "Publish the job offer so candidates can apply. Required before applications are accepted."
+        },
+        {
+          "name": "Close Job Offer",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/offres/{{offre_id}}/fermer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "offres", "{{offre_id}}", "fermer"]
+            }
+          },
+          "description": "Close the job offer to stop accepting new applications"
+        },
+        {
+          "name": "Delete Job Offer",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/offres/{{offre_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "offres", "{{offre_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Applications",
+      "item": [
+        {
+          "name": "Apply for Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{candidat_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"lettreMotivation\":\"Bonjour,Votre offre pour le poste de Développeur Full-Stack a retenu toute mon attention. Avec 6 ans d'expérience en développement Java et React, je suis convaincue que mon profil correspond parfaitement à vos attentes. J'ai notamment travaillé sur des projets de microservices et d'architecture cloud. Je serais ravie de vous présenter mon parcours lors d'un entretien.Cordialement,Sophie Bernard\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/offres/{{offre_id}}/postuler",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "offres", "{{offre_id}}", "postuler"]
+            }
+          },
+          "description": "Submit application with cover letter"
+        },
+        {
+          "name": "Get My Applications (Direct)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{candidat_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/candidatures/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "candidatures", "me"]
+            }
+          },
+          "description": "Get all applications for current candidate"
+        },
+        {
+          "name": "Get Applications for Job",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/offres/{{offre_id}}/candidatures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "offres", "{{offre_id}}", "candidatures"]
+            }
+          },
+          "description": "Recruiter views all candidates for a job"
+        },
+        {
+          "name": "Update Application Status",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/candidatures/{{candidature_id}}/statut?statut=EN_ENTRETIEN",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "candidatures", "{{candidature_id}}", "statut"],
+              "query": [
+                {"key": "statut", "value": "EN_ENTRETIEN"}
+              ]
+            }
+          },
+          "description": "Update status: EN_ATTENTE, EN_ENTRETIEN, ACCEPTEE, REFUSEE"
+        }
+      ]
+    },
+    {
+      "name": "7. AI Matching",
+      "item": [
+        {
+          "name": "Index My CV (Candidate)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{candidat_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/matching/cv/indexer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "matching", "cv", "indexer"]
+            }
+          },
+          "description": "Index your CV in the vector store for AI matching. Auto-done on upload, but can be re-indexed manually."
+        },
+        {
+          "name": "Index Job Offer (Recruiter)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/matching/offres/{{offre_id}}/indexer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "matching", "offres", "{{offre_id}}", "indexer"]
+            }
+          },
+          "description": "Index a job offer in the vector store for AI matching. Auto-done on publish, but can be re-indexed manually."
+        },
+        {
+          "name": "Find Matching Candidates for Job",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{recruteur_token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/matching/offres/{{offre_id}}/candidats?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "matching", "offres", "{{offre_id}}", "candidats"],
+              "query": [
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          },
+          "description": "AI-powered candidate matching using vector similarity. Returns ranked candidates with match scores based on skills and experience."
+        }
+      ]
+    }
+  ]
+}

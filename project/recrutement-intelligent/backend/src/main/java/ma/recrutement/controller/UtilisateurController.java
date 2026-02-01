@@ -66,13 +66,4 @@ public class UtilisateurController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Déconnexion d'un utilisateur.
-     */
-    @Operation(summary = "Déconnexion", description = "Déconnecte l'utilisateur actuel")
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        utilisateurService.logout();
-        return ResponseEntity.noContent().build();
-    }
 }

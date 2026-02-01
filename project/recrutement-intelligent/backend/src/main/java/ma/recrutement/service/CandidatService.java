@@ -34,6 +34,7 @@ public class CandidatService {
     private final CandidatRepository candidatRepository;
     private final CandidatureRepository candidatureRepository;
     private final FileStorageUtil fileStorageUtil;
+    private final ma.recrutement.service.ai.MatchingEngineService matchingEngineService;
 
     /**
      * Obtient le profil du candidat connecté.
@@ -56,6 +57,7 @@ public class CandidatService {
         Candidat candidat = getAuthenticatedCandidat();
 
         if (dto.getTelephone() != null) candidat.setTelephone(dto.getTelephone());
+        if (dto.getCvText() != null) candidat.setCvText(dto.getCvText());
         if (dto.getTitrePosteRecherche() != null) candidat.setTitrePosteRecherche(dto.getTitrePosteRecherche());
         if (dto.getDisponibiliteImmediate() != null) candidat.setDisponibiliteImmediate(dto.getDisponibiliteImmediate());
         if (dto.getDateDisponibilite() != null) candidat.setDateDisponibilite(dto.getDateDisponibilite());
@@ -92,6 +94,17 @@ public class CandidatService {
 
             candidat = candidatRepository.save(candidat);
 
+            // Auto-index the CV for AI matching (async to not block the response)
+            final Long candidatId = candidat.getId();
+            new Thread(() -> {
+                try {
+                    matchingEngineService.indexCv(candidatId);
+                    log.info("CV auto-indexed for candidat: {}", candidatId);
+                } catch (Exception e) {
+                    log.error("Failed to auto-index CV for candidat: {}", candidatId, e);
+                }
+            }).start();
+
             return CvUploadDTO.builder()
                 .cvPath(cvPath)
                 .cvText(cvText)
@@ -102,9 +115,35 @@ public class CandidatService {
                 .build();
 
         } catch (IOException e) {
-            log.error("Erreur lors de l'upload du CV", e);
-            throw new RuntimeException("Erreur lors de l'upload du CV", e);
+            log.error("Erreur IO lors de l'upload du CV", e);
+            throw new RuntimeException("Erreur lors de l'upload du CV: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Erreur inattendue lors de l'upload du CV", e);
+            throw new RuntimeException("Erreur lors de l'upload du CV: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Définit le texte du CV directement et l'indexe pour le matching.
+     *
+     * @param cvText le texte du CV
+     */
+    @Transactional
+    public void setCvText(String cvText) {
+        Candidat candidat = getAuthenticatedCandidat();
+        candidat.setCvText(cvText);
+        candidat = candidatRepository.save(candidat);
+
+        // Auto-index the CV for AI matching
+        final Long candidatId = candidat.getId();
+        new Thread(() -> {
+            try {
+                matchingEngineService.indexCv(candidatId);
+                log.info("CV auto-indexed for candidat: {}", candidatId);
+            } catch (Exception e) {
+                log.error("Failed to auto-index CV for candidat: {}", candidatId, e);
+            }
+        }).start();
     }
 
     /**
@@ -257,10 +296,66 @@ public class CandidatService {
             .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
     }
 
+    /**
+     * Get current authenticated user's email.
+     */
+    public String getCurrentEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication.getName();
+    }
+
     private String extractTextFromCv(MultipartFile file) {
-        // À implémenter avec Apache PDFBox et POI
-        // Retourne un placeholder pour l'instant
-        return "Texte extrait du CV - À implémenter avec PDFBox/POI";
+        try {
+            String filename = file.getOriginalFilename();
+            if (filename == null) {
+                return "";
+            }
+
+            String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+
+            if (extension.equals("pdf")) {
+                return extractFromPdf(file);
+            } else if (extension.equals("doc") || extension.equals("docx")) {
+                return extractFromDocx(file);
+            }
+
+            log.warn("Unsupported file format: {}", extension);
+            return "";
+        } catch (Exception e) {
+            log.error("Error extracting text from CV", e);
+            return "";
+        }
+    }
+
+    private String extractFromPdf(MultipartFile file) {
+        try (var inputStream = file.getInputStream()) {
+            org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.Loader.loadPDF(inputStream.readAllBytes());
+
+            var stripper = new org.apache.pdfbox.text.PDFTextStripper();
+            String text = stripper.getText(document);
+            document.close();
+
+            String result = text.trim();
+            log.info("Extracted {} characters from PDF", result.length());
+            return result;
+        } catch (IOException e) {
+            log.error("Error extracting text from PDF", e);
+            return "";
+        }
+    }
+
+    private String extractFromDocx(MultipartFile file) {
+        try (var inputStream = file.getInputStream()) {
+            var wordExtractor = new org.apache.poi.xwpf.extractor.XWPFWordExtractor(
+                new org.apache.poi.xwpf.usermodel.XWPFDocument(inputStream)
+            );
+            String text = wordExtractor.getText();
+            log.info("Extracted {} characters from DOCX", text.length());
+            return text.trim();
+        } catch (IOException e) {
+            log.error("Error extracting text from DOCX", e);
+            return "";
+        }
     }
 
     private CandidatDTO mapToDTO(Candidat candidat) {
@@ -271,6 +366,7 @@ public class CandidatService {
             .prenom(candidat.getPrenom())
             .telephone(candidat.getTelephone())
             .cvPath(candidat.getCvPath())
+            .cvText(candidat.getCvText())
             .titrePosteRecherche(candidat.getTitrePosteRecherche())
             .disponibiliteImmediate(candidat.getDisponibiliteImmediate())
             .dateDisponibilite(candidat.getDateDisponibilite())

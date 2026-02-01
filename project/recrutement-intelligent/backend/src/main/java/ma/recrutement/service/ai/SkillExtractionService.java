@@ -1,5 +1,7 @@
 package ma.recrutement.service.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ma.recrutement.dto.SkillExtractionDTO;
@@ -8,7 +10,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,6 +24,7 @@ import java.util.List;
 public class SkillExtractionService {
 
     private final ChatClient chatClient;
+    private final ObjectMapper objectMapper;
 
     /**
      * Extrait les compétences depuis le texte d'un CV.
@@ -108,11 +110,29 @@ public class SkillExtractionService {
             if (cleaned.endsWith("```")) {
                 cleaned = cleaned.substring(0, cleaned.length() - 3);
             }
+            cleaned = cleaned.trim();
 
-            // Parser manuellement (éviter la dépendance Jackson si possible)
-            List<SkillExtractionDTO.ExtractedSkill> skills = parseSkillsFromJson(cleaned);
-            String summary = extractField(cleaned, "summary");
-            int confidenceScore = extractIntField(cleaned, "confidenceScore");
+            // Parser avec ObjectMapper
+            JsonNode rootNode = objectMapper.readTree(cleaned);
+
+            // Extraire les skills
+            List<SkillExtractionDTO.ExtractedSkill> skills = new ArrayList<>();
+            JsonNode skillsNode = rootNode.get("skills");
+            if (skillsNode != null && skillsNode.isArray()) {
+                for (JsonNode skillNode : skillsNode) {
+                    SkillExtractionDTO.ExtractedSkill skill = SkillExtractionDTO.ExtractedSkill.builder()
+                        .name(getStringValue(skillNode, "name"))
+                        .category(getStringValue(skillNode, "category"))
+                        .level(getStringValue(skillNode, "level"))
+                        .yearsOfExperience(getIntValue(skillNode, "yearsOfExperience"))
+                        .certified(getBooleanValue(skillNode, "certified"))
+                        .build();
+                    skills.add(skill);
+                }
+            }
+
+            String summary = rootNode.has("summary") ? rootNode.get("summary").asText() : "";
+            int confidenceScore = rootNode.has("confidenceScore") ? rootNode.get("confidenceScore").asInt() : 0;
 
             return SkillExtractionDTO.builder()
                 .skills(skills)
@@ -134,24 +154,18 @@ public class SkillExtractionService {
         }
     }
 
-    private List<SkillExtractionDTO.ExtractedSkill> parseSkillsFromJson(String json) {
-        List<SkillExtractionDTO.ExtractedSkill> skills = new ArrayList<>();
-        // Parsing simplifié - en production, utiliser ObjectMapper
-        // Pour l'instant, retourner une liste vide
-        return skills;
+    private String getStringValue(JsonNode node, String fieldName) {
+        JsonNode field = node.get(fieldName);
+        return field != null ? field.asText() : "";
     }
 
-    private String extractField(String json, String fieldName) {
-        String pattern = "\"" + fieldName + "\"\\s*:\\s*\"([^\"]+)\"";
-        java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-        java.util.regex.Matcher m = p.matcher(json);
-        return m.find() ? m.group(1) : "";
+    private int getIntValue(JsonNode node, String fieldName) {
+        JsonNode field = node.get(fieldName);
+        return field != null && !field.isNull() ? field.asInt() : 0;
     }
 
-    private int extractIntField(String json, String fieldName) {
-        String pattern = "\"" + fieldName + "\"\\s*:\\s*(\\d+)";
-        java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-        java.util.regex.Matcher m = p.matcher(json);
-        return m.find() ? Integer.parseInt(m.group(1)) : 0;
+    private boolean getBooleanValue(JsonNode node, String fieldName) {
+        JsonNode field = node.get(fieldName);
+        return field != null && field.asBoolean();
     }
 }

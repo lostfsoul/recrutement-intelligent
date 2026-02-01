@@ -68,6 +68,5 @@ public class OffreCreateDTO {
     @Positive(message = "Le nombre de postes doit être positif")
     private Integer nombrePostes;
 
-    @NotNull(message = "L'ID de l'entreprise est obligatoire")
     private Long entrepriseId;
 }

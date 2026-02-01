@@ -40,8 +40,7 @@ public class Candidature {
     @JoinColumn(name = "offre_id", nullable = false)
     private OffreEmploi offre;
 
-    @Lob
-    @Column(name = "lettre_motivation")
+    @Column(name = "lettre_motivation", length = 3000)
     private String lettreMotivation;
 
     @Enumerated(EnumType.STRING)

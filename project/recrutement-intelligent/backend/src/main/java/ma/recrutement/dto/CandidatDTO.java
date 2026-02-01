@@ -26,6 +26,7 @@ public class CandidatDTO {
     private String prenom;
     private String telephone;
     private String cvPath;
+    private String cvText;
     private String titrePosteRecherche;
     private Boolean disponibiliteImmediate;
     private LocalDate dateDisponibilite;

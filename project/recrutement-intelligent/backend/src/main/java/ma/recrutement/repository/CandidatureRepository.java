@@ -23,12 +23,13 @@ import java.util.Optional;
 public interface CandidatureRepository extends JpaRepository<Candidature, Long>, JpaSpecificationExecutor<Candidature> {
 
     /**
-     * Trouve toutes les candidatures d'un candidat.
+     * Trouve toutes les candidatures d'un candidat avec les relations chargées.
      *
      * @param candidatId l'ID du candidat
      * @return la liste des candidatures
      */
-    List<Candidature> findByCandidatId(Long candidatId);
+    @Query("SELECT DISTINCT c FROM Candidature c LEFT JOIN FETCH c.offre o LEFT JOIN FETCH o.entreprise LEFT JOIN FETCH c.candidat WHERE c.candidat.id = :candidatId")
+    List<Candidature> findByCandidatId(@Param("candidatId") Long candidatId);
 
     /**
      * Trouve toutes les candidatures d'un candidat avec pagination.

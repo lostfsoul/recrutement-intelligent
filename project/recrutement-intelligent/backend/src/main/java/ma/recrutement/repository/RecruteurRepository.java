@@ -26,7 +26,8 @@ public interface RecruteurRepository extends JpaRepository<Recruteur, Long>, Jpa
      * @param email l'email du recruteur
      * @return le recruteur trouvé ou Optional vide
      */
-    Optional<Recruteur> findByEmail(String email);
+    @Query("SELECT r FROM Recruteur r WHERE r.email = :email")
+    Optional<Recruteur> findByEmail(@Param("email") String email);
 
     /**
      * Vérifie si un recruteur existe avec cet email.

@@ -31,8 +31,7 @@ public class Candidat extends Utilisateur {
     @Column(name = "cv_path", length = 255)
     private String cvPath;
 
-    @Lob
-    @Column(name = "cv_text")
+    @Column(name = "cv_text", length = 10000)
     private String cvText;
 
     @Column(name = "cv_vector_id", length = 255)

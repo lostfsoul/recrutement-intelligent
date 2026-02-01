@@ -223,4 +223,13 @@ public interface OffreEmploiRepository extends JpaRepository<OffreEmploi, Long>,
      */
     @Query("SELECT o.typeContrat, COUNT(o) FROM OffreEmploi o WHERE o.statut = 'PUBLIEE' GROUP BY o.typeContrat")
     List<Object[]> countByTypeContrat();
+
+    /**
+     * Trouve une offre par ID avec l'entreprise chargée.
+     *
+     * @param offreId l'ID de l'offre
+     * @return l'offre trouvée avec entreprise
+     */
+    @Query("SELECT o FROM OffreEmploi o LEFT JOIN FETCH o.entreprise WHERE o.id = :offreId")
+    OffreEmploi findByIdWithEntreprise(@Param("offreId") Long offreId);
 }
