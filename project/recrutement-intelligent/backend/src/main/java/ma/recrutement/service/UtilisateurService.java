@@ -181,12 +181,6 @@ public class UtilisateurService {
                 .statut(Utilisateur.StatutUtilisateur.ACTIF)
                 .verified(false)
                 .build();
-            case ADMINISTRATEUR -> Administrateur.builder()
-                .email(request.getEmail())
-                .nom(request.getNom())
-                .prenom(request.getPrenom())
-                .statut(Utilisateur.StatutUtilisateur.ACTIF)
-                .build();
             default -> throw new BusinessException("Rôle non reconnu: " + request.getRole());
         };
     }

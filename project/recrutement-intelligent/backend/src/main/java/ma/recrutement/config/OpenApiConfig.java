@@ -45,7 +45,7 @@ public class OpenApiConfig {
                     API REST pour la plateforme de recrutement intelligente utilisant Spring Boot et Spring AI.
 
                     ## Fonctionnalités principales
-                    * Gestion des utilisateurs (Candidats, Recruteurs, Administrateurs)
+                    * Gestion des utilisateurs (Candidats, Recruteurs)
                     * Gestion des offres d'emploi
                     * Gestion des candidatures
                     * Matching intelligent CV/Offres avec IA

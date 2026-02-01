@@ -78,8 +78,7 @@ public abstract class Utilisateur {
      */
     public enum Role {
         CANDIDAT,
-        RECRUTEUR,
-        ADMINISTRATEUR
+        RECRUTEUR
     }
 
     /**
