@@ -1,0 +1,68 @@
+# =====================================================
+# Docker Ignore Files
+# Files and directories to exclude from Docker build context
+# =====================================================
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Uploads (will be mounted as volume)
+uploads/
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Test files
+src/test/
+
+# Backup files
+*.bak
+*.backup
+*.swp
+*~
+
+# Environment files
+.env
+.env.*
+
+# Claude files
+.claude/
